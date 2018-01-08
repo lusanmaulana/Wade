@@ -1,6 +1,10 @@
 package com.trois.wade;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -16,11 +20,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 public class Beranda extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private String JSON_STRING_WARGA;
+    private String JSON_STRING_RONDA;
+
+    DbWade db = new DbWade(this);
 
     private ArrayList<String> itemsWarga = new ArrayList<>();
     ListView daftarWarga;
@@ -51,18 +65,15 @@ public class Beranda extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        //Ambil data warga untuk tampil di ListView
-        DbWade db = new DbWade(getApplicationContext());
-        db.open();
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
-        ArrayList<DbWade.TbWarga> warga = db.getAllWarga();
-        for(DbWade.TbWarga index : warga){
-            itemsWarga.add(index.nama+"\n"+index.alamat);
+        if (networkInfo != null && networkInfo.isConnected()) {
+            syncWarga();
+        }else{
+            Toast.makeText( getApplicationContext(), "Tidak ada koneksi. Gagal memperbaharui data",Toast.LENGTH_SHORT);
+            showAllWarga();
         }
-
-        daftarWarga = (ListView) findViewById(R.id.lvWarga);
-        adapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, itemsWarga);
-        daftarWarga.setAdapter(adapter);
     }
 
     @Override
@@ -90,7 +101,9 @@ public class Beranda extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_sync) {
+            syncWarga();
+
             return true;
         }
 
@@ -103,21 +116,109 @@ public class Beranda extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_profil) {
+        if (id == R.id.nav_warga) {
 
         } else if (id == R.id.nav_lokasi) {
             Intent lokasi = new Intent(this, Lokasi.class);
             startActivity(lokasi);
-        } else if (id == R.id.nav_warga) {
-
-        } else if (id == R.id.nav_pengaturan) {
+        } else if (id == R.id.nav_ronda) {
+            Intent ronda = new Intent(this, Ronda.class);
+            startActivity(ronda);
+        } else if (id == R.id.nav_profil) {
 
         } else if (id == R.id.nav_logout) {
-
+            Intent logout = new Intent(this, Login.class);
+            startActivity(logout);
+            finish();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void syncWarga(){
+        class SyncWarga extends AsyncTask<Void,Void,String> {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+
+                db.open();
+                db.dropTable("tb_warga");
+                db.close();
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+//                loading.dismiss();
+                JSON_STRING_WARGA = s;
+                JSONObject jsonObject = null;
+
+                Log.i("JSON Result",JSON_STRING_WARGA);
+                try {
+                    jsonObject = new JSONObject(JSON_STRING_WARGA);
+                    JSONArray result = jsonObject.getJSONArray(DbWade.TAG_JSON_ARRAY);
+
+                    for(int i = 0; i<result.length(); i++){
+                        JSONObject jo = result.getJSONObject(i);
+
+                        DbWade.TbWarga tb = new DbWade.TbWarga();
+                        tb.id_warga = jo.getInt("id_warga");
+                        tb.nama = jo.getString("nama");
+                        tb.lat = Double.parseDouble(jo.getString("lat"));
+                        tb.lon = Double.parseDouble(jo.getString("lon"));
+                        tb.alamat = jo.getString("alamat");
+                        tb.kontak = jo.getString("kontak");
+                        tb.status = jo.getString("status");
+                        tb.wilayah = jo.getString("wilayah");
+                        tb.foto = jo.getString("foto");
+
+                        Log.i("Insert params nama: ",tb.nama);
+                        Log.i("Insert params lat: ",tb.lat.toString());
+                        Log.i("Insert params lat: ",tb.lon.toString());
+                        Log.i("Insert params alamat: ",tb.alamat);
+                        Log.i("Insert params kontak: ",tb.kontak);
+
+                        db.open();
+                        db.insertWarga(tb);
+                        db.close();
+
+                        showAllWarga();
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected String doInBackground(Void... params) {
+                RequestHandler rh = new RequestHandler();
+                String s = rh.sendGetRequest(DbWade.URL_WARGA_GET_ALL);
+                return s;
+            }
+        }
+
+        SyncWarga sw = new SyncWarga();
+        sw.execute();
+    }
+
+    private void showAllWarga(){
+        db.open();
+
+        itemsWarga.clear();
+
+        ArrayList<DbWade.TbWarga> warga = db.getAllWarga();
+        for(DbWade.TbWarga index : warga){
+            itemsWarga.add(index.nama);
+        }
+
+        daftarWarga = (ListView) findViewById(R.id.lvRonda);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, itemsWarga);
+        daftarWarga.setAdapter(adapter);
+
+        db.close();
     }
 }

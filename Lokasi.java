@@ -93,7 +93,6 @@ public class Lokasi extends FragmentActivity implements
         super.onStop();
     }
 
-
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -117,8 +116,8 @@ public class Lokasi extends FragmentActivity implements
 
         ArrayList<DbWade.TbWarga> warga = db.getAllWarga();
         for(DbWade.TbWarga index : warga){
-            latPos = Double.parseDouble(index.lat);
-            lonPos = Double.parseDouble(index.lon);
+            latPos = index.lat;
+            lonPos = index.lon;
             rumahWarga = new LatLng(latPos, lonPos);
 
             Marker marker = mMap.addMarker(new MarkerOptions().position(rumahWarga)

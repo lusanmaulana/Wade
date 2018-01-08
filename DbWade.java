@@ -14,6 +14,86 @@ import java.util.ArrayList;
 
 public class DbWade {
 
+    //URL WEBSERVICES
+    //TB_AKUN
+    public static final String URL_AKUN_ADD = "http://inquery.hostingmerahputih.id/Wade/akunAdd.php";
+    public static final String URL_AKUN_GET = "http://inquery.hostingmerahputih.id/Wade/akunGet.php?id_akun=";
+    public static final String URL_AKUN_GET_ALL = "http://inquery.hostingmerahputih.id/Wade/akunGetAll.php";
+    public static final String URL_AKUN_UPDATE = "http://inquery.hostingmerahputih.id/Wade/akunUpdate.php";
+    public static final String URL_AKUN_DELETE = "http://inquery.hostingmerahputih.id/Wade/akunDelete.php?id_akun=";
+    public static final String URL_AKUN_CP = "http://inquery.hostingmerahputih.id/Wade/akunDelete.php?id=";
+    public static final String URL_AKUN_LOGIN = "http://inquery.hostingmerahputih.id/Wade/akunLogin.php";
+
+    //TB_WARGA
+    public static final String URL_WARGA_ADD = "http://inquery.hostingmerahputih.id/Wade/wargaAdd.php";
+    public static final String URL_WARGA_GET = "http://inquery.hostingmerahputih.id/Wade/wargaGet.php?id_warga=";
+    public static final String URL_WARGA_GET_ALL = "http://inquery.hostingmerahputih.id/Wade/wargaGetAll.php";
+    public static final String URL_WARGA_UPDATE = "http://inquery.hostingmerahputih.id/Wade/wargaUpdate.php";
+    public static final String URL_WARGA_DELETE = "http://inquery.hostingmerahputih.id/Wade/wargaDelete.php?id_warga=";
+    public static final String URL_WARGA_GET_LAST_ID = "http://inquery.hostingmerahputih.id/Wade/wargaGetLastID.php";
+
+    //TB_RONDA
+    public static final String URL_RONDA_ADD = "http://inquery.hostingmerahputih.id/Wade/rondaAdd.php";
+    public static final String URL_RONDA_GET = "http://inquery.hostingmerahputih.id/Wade/rondaGet.php?id_ronda=";
+    public static final String URL_RONDA_GET_ALL = "http://inquery.hostingmerahputih.id/Wade/rondaGetAll.php";
+    public static final String URL_RONDA_UPDATE = "http://inquery.hostingmerahputih.id/Wade/rondaUpdate.php";
+    public static final String URL_RONDA_DELETE = "http://inquery.hostingmerahputih.id/Wade/rondaDelete.php?id_ronda=";
+
+    //Dibawah ini merupakan Kunci yang akan digunakan untuk mengirim permintaan ke Skrip PHP
+    //TB_AKUN
+    public static final String KEY_AKUN_ID = "id_akun";
+    public static final String KEY_AKUN_USERNAME = "username";
+    public static final String KEY_AKUN_PASSWORD = "password";
+    public static final String KEY_AKUN_EMAIL = "email";
+    public static final String KEY_AKUN_ID_WARGA = "id_warga";
+
+    //TB_WARGA
+    public static final String KEY_WARGA_ID = "id_warga";
+    public static final String KEY_WARGA_NAMA = "nama";
+    public static final String KEY_WARGA_LAT = "lat";
+    public static final String KEY_WARGA_LON = "lon";
+    public static final String KEY_WARGA_ALAMAT = "alamat";
+    public static final String KEY_WARGA_KONTAK = "kontak";
+    public static final String KEY_WARGA_STATUS = "status";
+    public static final String KEY_WARGA_WILAYAH = "wilayah";
+    public static final String KEY_WARGA_FOTO = "foto";
+
+    //TB_RONDA
+    public static final String KEY_RONDA_ID = "id_ronda";
+    public static final String KEY_RONDA_HARI = "hari";
+    public static final String KEY_RONDA_ID_WARGA = "id_warga";
+
+    //JSON Tags
+    public static final String TAG_JSON_ARRAY = "result";
+
+    //TB_AKUN
+    public static final String TAG_AKUN_ID = "id_akun";
+    public static final String TAG_AKUN_USERNAME = "username";
+    public static final String TAG_AKUN_PASSWORD = "password";
+    public static final String TAG_AKUN_EMAIL = "email";
+    public static final String TAG_AKUN_ID_WARGA = "id_warga";
+
+    //TB_WARGA
+    public static final String TAG_WARGA_ID = "id_warga";
+    public static final String TAG_WARGA_NAMA = "nama";
+    public static final String TAG_WARGA_LAT = "lat";
+    public static final String TAG_WARGA_LON = "lon";
+    public static final String TAG_WARGA_ALAMAT = "alamat";
+    public static final String TAG_WARGA_KONTAK = "kontak";
+    public static final String TAG_WARGA_STATUS = "status";
+    public static final String TAG_WARGA_WILAYAH = "wilayah";
+    public static final String TAG_WARGA_FOTO = "foto";
+
+    //TB_RONDA
+    public static final String TAG_RONDA_ID = "id_ronda";
+    public static final String TAG_RONDA_HARI = "hari";
+    public static final String TAG_RONDA_ID_WARGA = "id_warga";
+
+    //ID
+    public static final String AKUN_ID = "id_akun";
+    public static final String WARGA_ID = "id_warga";
+    public static final String RONDA_ID = "id_ronda";
+
     public static class TbAkun{
         public int id_akun;
         public String username;
@@ -25,8 +105,8 @@ public class DbWade {
     public static class TbWarga{
         public int id_warga;
         public String nama;
-        public String lat;
-        public String lon;
+        public Double lat;
+        public Double lon;
         public String alamat;
         public String kontak;
         public String status;
@@ -61,9 +141,11 @@ public class DbWade {
     public DbWade(Context c){
         dbHelper = new OpenHelper(c);
     }
+
     public void open(){
         db = dbHelper.getWritableDatabase();
     }
+
     public void close(){
         db.close();
     }
@@ -84,6 +166,7 @@ public class DbWade {
 
     public long insertWarga(DbWade.TbWarga tbWarga){
         ContentValues newVal = new ContentValues();
+
         newVal.put("id_warga",tbWarga.id_warga);
         newVal.put("nama",tbWarga.nama);
         newVal.put("lat",tbWarga.lat);
@@ -93,7 +176,9 @@ public class DbWade {
         newVal.put("status",tbWarga.status);
         newVal.put("wilayah",tbWarga.wilayah);
         newVal.put("foto",tbWarga.foto);
+
         Log.d("insert","wargain");
+
         return db.insert("tb_warga",null,newVal);
     }
 
@@ -154,8 +239,8 @@ public class DbWade {
                 TbWarga tb = new TbWarga();
                 tb.id_warga = cur.getInt(0);
                 tb.nama = cur.getString(1);
-                tb.lat = cur.getString(2);
-                tb.lon = cur.getString(3);
+                tb.lat = Double.parseDouble(cur.getString(2));
+                tb.lon = Double.parseDouble(cur.getString(3));
                 tb.alamat = cur.getString(4);
                 tb.kontak = cur.getString(5);
                 tb.status = cur.getString(6);
@@ -234,8 +319,8 @@ public class DbWade {
         if(cur.moveToFirst()){
             tb.id_warga = cur.getInt(0);
             tb.nama = cur.getString(1);
-            tb.lat = cur.getString(2);
-            tb.lon = cur.getString(3);
+            tb.lat = Double.parseDouble(cur.getString(2));
+            tb.lon = Double.parseDouble(cur.getString(3));
             tb.alamat = cur.getString(4);
             tb.kontak = cur.getString(5);
             tb.status = cur.getString(6);

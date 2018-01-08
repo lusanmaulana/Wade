@@ -16,7 +16,7 @@ public class OpenHelper extends SQLiteOpenHelper {
     public static final String TABLE_AKUN_CREATE =
             "CREATE TABLE tb_akun (id_akun INTEGER PRIMARY KEY, username TEXT, password TEXT, email TEXT, id_warga INTEGER)";
     public static final String TABLE_WARGA_CREATE =
-            "CREATE TABLE tb_warga (id_warga INTEGER PRIMARY KEY, nama TEXT, lat TEXT, lon TEXT, alamat TEXT, kontak TEXT, status TEXT, wilayah TEXT, foto TEXT)";
+            "CREATE TABLE tb_warga (id_warga INTEGER PRIMARY KEY, nama TEXT, lat DOUBLE, lon DOUBLE, alamat TEXT, kontak TEXT, status TEXT, wilayah TEXT, foto TEXT)";
     public static final String TABLE_RONDA_CREATE =
             "CREATE TABLE tb_ronda (id_ronda INTEGER PRIMARY KEY, hari TEXT, id_warga INTEGER)";
     public static final String TABLE_CHAT_CREATE =
