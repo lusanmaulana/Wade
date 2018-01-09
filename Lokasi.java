@@ -1,13 +1,23 @@
 package com.trois.wade;
 
 import android.Manifest;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -26,9 +36,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 
-public class Lokasi extends FragmentActivity implements
+public class Lokasi extends AppCompatActivity implements
         OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationListener, NavigationView.OnNavigationItemSelectedListener {
+
+    int id;
 
     boolean camStatus = false;
     private GoogleMap mMap;
@@ -73,6 +85,23 @@ public class Lokasi extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lokasi);
+
+        Intent intent2 = getIntent();
+        id = intent2.getIntExtra(Login.EXTRA_MESG,0);
+
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.tbLokasi);
+        setSupportActionBar(myToolbar);
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, myToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setCheckedItem(R.id.nav_lokasi);
+        navigationView.setNavigationItemSelectedListener(this);
+
         buildGoogleApiClient();
         createLocationRequest();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -106,7 +135,9 @@ public class Lokasi extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         LatLng posSekarang = new LatLng(-34, 151);
-        mPosSekarang = mMap.addMarker(new MarkerOptions().position(posSekarang).title("Posisi sekarang."));
+        mPosSekarang = mMap.addMarker(new MarkerOptions().position(posSekarang)
+                .title("Posisi sekarang.")
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.current)));
 
         DbWade db = new DbWade(getApplicationContext());
         db.open();
@@ -120,10 +151,10 @@ public class Lokasi extends FragmentActivity implements
             lonPos = index.lon;
             rumahWarga = new LatLng(latPos, lonPos);
 
-            Marker marker = mMap.addMarker(new MarkerOptions().position(rumahWarga)
+            mMap.addMarker(new MarkerOptions().position(rumahWarga)
                     .title(index.nama)
                     .snippet(index.kontak)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.home_marker)));
         }
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posSekarang,18));
@@ -160,5 +191,41 @@ public class Lokasi extends FragmentActivity implements
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posSekarang,18));
             camStatus = !camStatus;
         }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        SharedPreferences sp = getSharedPreferences("com.trois.wade",MODE_PRIVATE);
+        SharedPreferences.Editor ed = sp.edit();
+
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_warga) {
+            Intent beranda = new Intent(this, Beranda.class);
+            beranda.putExtra(Login.EXTRA_MESG, id);
+            startActivity(beranda);
+        } else if (id == R.id.nav_lokasi) {
+
+        } else if (id == R.id.nav_ronda) {
+            Intent lokasi = new Intent(this, Ronda.class);
+            lokasi.putExtra(Login.EXTRA_MESG, id);
+            startActivity(lokasi);
+        } else if (id == R.id.nav_profil) {
+            Intent profil = new Intent(this, Profil.class);
+            profil.putExtra(Login.EXTRA_MESG, id);
+            startActivity(profil);
+        } else if (id == R.id.nav_logout) {
+            ed.putString("status","false");
+            ed.putInt("id",0);
+            ed.commit();
+            Intent logout = new Intent(this, Login.class);
+            startActivity(logout);
+            finish();
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return false;
     }
 }

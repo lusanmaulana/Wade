@@ -115,12 +115,12 @@ public class Daftar extends AppCompatActivity {
                 String resWarga = rh.sendPostRequest(DbWade.URL_WARGA_ADD, paramsWarga);
 
                 String wargaLastID = rh.sendGetRequest(DbWade.URL_WARGA_GET_LAST_ID);
-
                 try {
                     JSONObject jsonObject = new JSONObject(wargaLastID);
                     JSONArray result = jsonObject.getJSONArray(DbWade.TAG_JSON_ARRAY);
                     JSONObject c = result.getJSONObject(0);
                     String lastID = c.getString(DbWade.TAG_WARGA_ID);
+                    Log.i("Last ID",lastID);
 
                     lastIDWarga[0] = lastID;
                 } catch (JSONException e) {

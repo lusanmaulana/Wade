@@ -311,7 +311,7 @@ public class DbWade {
         return out;
     }
 
-    public TbWarga getWargaLast(int id_warga){
+    public TbWarga getWargaById(int id_warga){
         Cursor cur = null;
         TbWarga tb = new TbWarga();
         cur = db.rawQuery("SELECT * FROM tb_warga WHERE id_warga="+id_warga, null);
@@ -370,4 +370,21 @@ public class DbWade {
         return result;
     }
 
+    public ArrayList<TbRonda> getRondaByHari(String hari){
+        Cursor cur = null;
+        ArrayList<TbRonda> out = new ArrayList<>();
+        cur = db.rawQuery("SELECT * FROM tb_ronda WHERE hari="+hari,null);
+        if(cur.moveToFirst()){
+            do{
+                TbRonda tb = new TbRonda();
+                tb.id_warga = cur.getInt(0);
+                tb.hari = cur.getString(1);
+                tb.id_ronda = cur.getInt(2);
+
+                out.add(tb);
+            }while(cur.moveToNext());
+        }
+        cur.close();
+        return out;
+    }
 }

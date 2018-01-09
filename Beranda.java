@@ -2,6 +2,7 @@ package com.trois.wade;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -20,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -32,7 +34,7 @@ public class Beranda extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private String JSON_STRING_WARGA;
-    private String JSON_STRING_RONDA;
+    int id;
 
     DbWade db = new DbWade(this);
 
@@ -44,6 +46,10 @@ public class Beranda extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_beranda);
+
+        Intent intent2 = getIntent();
+        id = intent2.getIntExtra(Login.EXTRA_MESG,0);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -63,6 +69,7 @@ public class Beranda extends AppCompatActivity
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setCheckedItem(R.id.nav_warga);
         navigationView.setNavigationItemSelectedListener(this);
 
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -113,6 +120,9 @@ public class Beranda extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+        SharedPreferences sp = getSharedPreferences("com.trois.wade",MODE_PRIVATE);
+        SharedPreferences.Editor ed = sp.edit();
+
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
@@ -120,13 +130,20 @@ public class Beranda extends AppCompatActivity
 
         } else if (id == R.id.nav_lokasi) {
             Intent lokasi = new Intent(this, Lokasi.class);
+            lokasi.putExtra(Login.EXTRA_MESG, id);
             startActivity(lokasi);
         } else if (id == R.id.nav_ronda) {
             Intent ronda = new Intent(this, Ronda.class);
+            ronda.putExtra(Login.EXTRA_MESG, id);
             startActivity(ronda);
         } else if (id == R.id.nav_profil) {
-
+            Intent profil = new Intent(this, Profil.class);
+            profil.putExtra(Login.EXTRA_MESG, id);
+            startActivity(profil);
         } else if (id == R.id.nav_logout) {
+            ed.putString("status","false");
+            ed.putInt("id",0);
+            ed.commit();
             Intent logout = new Intent(this, Login.class);
             startActivity(logout);
             finish();
@@ -134,7 +151,7 @@ public class Beranda extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
-        return true;
+        return false;
     }
 
     public void syncWarga(){
@@ -175,12 +192,6 @@ public class Beranda extends AppCompatActivity
                         tb.wilayah = jo.getString("wilayah");
                         tb.foto = jo.getString("foto");
 
-                        Log.i("Insert params nama: ",tb.nama);
-                        Log.i("Insert params lat: ",tb.lat.toString());
-                        Log.i("Insert params lat: ",tb.lon.toString());
-                        Log.i("Insert params alamat: ",tb.alamat);
-                        Log.i("Insert params kontak: ",tb.kontak);
-
                         db.open();
                         db.insertWarga(tb);
                         db.close();
@@ -215,7 +226,7 @@ public class Beranda extends AppCompatActivity
             itemsWarga.add(index.nama);
         }
 
-        daftarWarga = (ListView) findViewById(R.id.lvRonda);
+        daftarWarga = (ListView) findViewById(R.id.lvWarga);
         adapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, itemsWarga);
         daftarWarga.setAdapter(adapter);
 

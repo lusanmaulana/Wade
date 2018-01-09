@@ -3,6 +3,7 @@ package com.trois.wade;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -32,13 +33,36 @@ import java.util.HashMap;
 
 public class Login extends AppCompatActivity {
 
-    int status = 0;
+    public static final String EXTRA_MESG = "com.trois.wade.MESG";
     String username;
     String password;
     DbWade db = new DbWade(this);
 
+    private String JSON_STRING_AKUN;
+
+    public static class User{
+        public int id_akun;
+        public String username;
+        public String password;
+        public String email;
+        public int id_warga;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        SharedPreferences sp = getSharedPreferences("com.trois.wade",MODE_PRIVATE);
+        SharedPreferences.Editor ed = sp.edit();
+
+        String status = sp.getString("status","false");
+        int id = sp.getInt("id",0);
+
+        if(status.equals("true")){
+            Intent beranda = new Intent(getApplicationContext(),Beranda.class);
+            beranda.putExtra(EXTRA_MESG, id);
+            startActivity(beranda);
+        }
+
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         super.onCreate(savedInstanceState);
@@ -74,16 +98,9 @@ public class Login extends AppCompatActivity {
         password = Login.md5(password);
 
         if (networkInfo != null && networkInfo.isConnected()) {
-
-            //loginProcess();
-
-            Intent beranda = new Intent(getApplicationContext(),Beranda.class);
-            startActivity(beranda);
+            loginProcess();
         }else{
             Toast t = Toast.makeText(getApplicationContext(), "Tidak ada koneksi", Toast.LENGTH_SHORT);
-
-            Intent beranda = new Intent(getApplicationContext(),Beranda.class);
-            startActivity(beranda);
         }
 
 //        if (networkInfo != null && networkInfo.isConnected()) {
@@ -230,35 +247,89 @@ public class Login extends AppCompatActivity {
         startActivity(daftar);
     }
 
-    private void loginProcess(){
-        class LoginProcess extends AsyncTask<Void,Void,String>{
+    public void loginProcess(){
+        final int[] id = new int[1];
+        final String[] uname = new String[1];
+        final String[] pass = new String[1];
+        final int[] status = {0};
+
+        class LoginProcess extends AsyncTask<Void,Void,String> {
+
             ProgressDialog loading;
+
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                loading = ProgressDialog.show(Login.this,"Logging in...","Mohon tunggu...",false,false);
-            }
 
-            @Override
-            protected void onPostExecute(String s) {
-                super.onPostExecute(s);
-                loading.dismiss();
+                db.open();
+                db.dropTable("tb_warga");
+                db.close();
 
-                Toast t = Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT);
-
-                //showEmployee(s);
+                loading = ProgressDialog.show(Login.this,"Masuk...","Mohon tunggu...",false,false);
             }
 
             @Override
             protected String doInBackground(Void... params) {
                 RequestHandler rh = new RequestHandler();
-                String s = rh.sendLoginRequest(DbWade.URL_AKUN_LOGIN,username,password);
+                String s = rh.sendGetRequest(DbWade.URL_AKUN_GET_ALL);
                 return s;
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+//                loading.dismiss();
+                JSON_STRING_AKUN = s;
+                JSONObject jsonObject = null;
+                SharedPreferences sp = getSharedPreferences("com.trois.wade",MODE_PRIVATE);
+                SharedPreferences.Editor ed = sp.edit();
+
+                try {
+                    jsonObject = new JSONObject(JSON_STRING_AKUN);
+                    JSONArray result = jsonObject.getJSONArray(DbWade.TAG_JSON_ARRAY);
+
+                    Log.i("Input U", username);
+                    Log.i("Input P", password);
+
+                    for(int i = 0; i<result.length(); i++){
+                        JSONObject jo = result.getJSONObject(i);
+
+                        id[0] = jo.getInt("id_akun");
+                        uname[0] = jo.getString("username");
+                        pass[0] = jo.getString("password");
+
+                        Log.i("DB U", ""+uname[0]);
+                        Log.i("DB P", ""+pass[0]);
+
+                        if(uname[0].equals(username) && pass[0].equals(password)){
+                            status[0] = 1;
+                        }
+                    }
+
+                    Log.i("Status", ""+status[0]);
+
+                    loading.dismiss();
+
+                    if(status[0] == 1){
+                        ed.putString("status","true");
+                        ed.putInt("id",id[0]);
+                        ed.commit();
+                        Intent beranda = new Intent(getApplicationContext(),Beranda.class);
+                        beranda.putExtra(EXTRA_MESG,id[0]);
+                        startActivity(beranda);
+                    }else{
+                        Toast t = Toast.makeText(getApplicationContext(), "Username atau Password salah!", Toast.LENGTH_SHORT);
+                        t.show();
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
-        LoginProcess ge = new LoginProcess();
-        ge.execute();
+        LoginProcess login = new LoginProcess();
+        login.execute();
     }
 
     public static final String md5(final String s) {
